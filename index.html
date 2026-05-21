@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>亞瑟傳奇 Quest - 線上多人點對點桌遊</title>
+  <meta name="description" content="無伺服器點對點 (P2P) 多人線上版《亞瑟傳奇》（Quest），經典熱門桌遊阿瓦隆的第二代經典續作！免安裝、零延遲、隨開隨玩！">
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Noto+Sans+TC:wght@300;400;700;900&display=swap" rel="stylesheet">
+  
+  <!-- PeerJS CDN -->
+  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+  
+  <!-- Global Stylesheet -->
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <!-- 背景氛圍光源 -->
+  <div class="bg-glow bg-glow-left"></div>
+  <div class="bg-glow bg-glow-right"></div>
+  
+  <!-- 主應用容器 -->
+  <div id="app">
+    <!-- UI 模組將會在此動態渲染 -->
+    <div class="loading-screen">
+      <div class="spinner"></div>
+      <p>正在加載亞瑟傳奇的神祕力量...</p>
+    </div>
+  </div>
+
+  <!-- 主入口腳本 (ES Module) -->
+  <script type="module" src="./js/app.js"></script>
+</body>
+</html>

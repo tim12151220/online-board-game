@@ -1,0 +1,1454 @@
+/* -------------------------------------------------------------
+   亞瑟傳奇 Quest - 設計系統與樣式 (Style Sheet)
+   ------------------------------------------------------------- */
+
+/* 1. 設計系統與全域變數 */
+:root {
+  --font-family: 'Inter', 'Noto Sans TC', -apple-system, BlinkMacSystemFont, sans-serif;
+  
+  /* 奢華色盤 */
+  --bg-color: #080a13;
+  --bg-glow-good: radial-gradient(circle, rgba(212, 175, 55, 0.15) 0%, rgba(8, 10, 19, 0) 70%);
+  --bg-glow-evil: radial-gradient(circle, rgba(138, 43, 226, 0.18) 0%, rgba(8, 10, 19, 0) 70%);
+  
+  /* 陣營色彩 */
+  --color-good: #d4af37; /* 皇家金 */
+  --color-good-glow: rgba(212, 175, 55, 0.4);
+  --color-evil: #9d4edd; /* 邪惡紫 */
+  --color-evil-glow: rgba(157, 78, 221, 0.4);
+  
+  /* 系統色彩 */
+  --color-success: #00e676;
+  --color-error: #ff1744;
+  --color-warning: #ff9100;
+  
+  /* 玻璃擬態 (Glassmorphism) */
+  --glass-bg: rgba(18, 22, 41, 0.65);
+  --glass-bg-hover: rgba(26, 32, 59, 0.8);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-border-gold: rgba(212, 175, 55, 0.25);
+  --glass-border-purple: rgba(157, 78, 221, 0.25);
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  
+  /* 字體尺寸 */
+  --fs-xs: 0.75rem;
+  --fs-sm: 0.875rem;
+  --fs-md: 1rem;
+  --fs-lg: 1.25rem;
+  --fs-xl: 1.75rem;
+  --fs-xxl: 2.5rem;
+}
+
+/* 2. 重設與基礎 */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: #e2e8f0;
+  font-family: var(--font-family);
+  min-height: 100vh;
+  overflow-x: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 3. 背景氛圍光源 (Glow Aura) */
+.bg-glow {
+  position: fixed;
+  width: 60vw;
+  height: 60vw;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: -1;
+  filter: blur(80px);
+  opacity: 0.6;
+  transition: background 1.5s ease-in-out;
+}
+.bg-glow-left {
+  top: -10vw;
+  left: -10vw;
+  background: var(--bg-glow-good);
+}
+.bg-glow-right {
+  bottom: -10vw;
+  right: -10vw;
+  background: var(--bg-glow-evil);
+}
+
+/* 4. 加載畫面 */
+.loading-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 3px solid rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  border-top-color: var(--color-good);
+  animation: spin 1s linear infinite;
+  box-shadow: 0 0 15px var(--color-good-glow);
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* 5. 頂級按鈕與輸入框 */
+button {
+  cursor: pointer;
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  padding: 12px 24px;
+  font-size: var(--fs-md);
+  font-family: var(--font-family);
+  font-weight: 600;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+  outline: none;
+  backdrop-filter: blur(10px);
+}
+button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+button:active {
+  transform: translateY(0);
+}
+button.btn-primary {
+  background: linear-gradient(135deg, var(--color-good) 0%, #b8860b 100%);
+  color: #0b0d19;
+  border: none;
+  box-shadow: 0 0 15px rgba(212, 175, 55, 0.3);
+}
+button.btn-primary:hover {
+  box-shadow: 0 0 25px rgba(212, 175, 55, 0.6);
+  background: linear-gradient(135deg, #fff7d6 0%, var(--color-good) 100%);
+}
+button.btn-danger {
+  background: linear-gradient(135deg, var(--color-error) 0%, #b30022 100%);
+  color: #fff;
+  border: none;
+  box-shadow: 0 0 15px rgba(255, 23, 68, 0.3);
+}
+button.btn-danger:hover {
+  box-shadow: 0 0 25px rgba(255, 23, 68, 0.6);
+}
+button.btn-purple {
+  background: linear-gradient(135deg, var(--color-evil) 0%, #5a189a 100%);
+  color: #fff;
+  border: none;
+  box-shadow: 0 0 15px rgba(157, 78, 221, 0.3);
+}
+button.btn-purple:hover {
+  box-shadow: 0 0 25px rgba(157, 78, 221, 0.6);
+}
+button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+input[type="text"] {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  padding: 12px 16px;
+  color: #fff;
+  font-size: var(--fs-md);
+  font-family: var(--font-family);
+  outline: none;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+input[type="text"]:focus {
+  border-color: var(--color-good);
+  box-shadow: 0 0 15px rgba(212, 175, 55, 0.2);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* 6. 大廳 UI (Lobby Setup Page) */
+.lobby-container {
+  width: 90vw;
+  max-width: 800px;
+  padding: 40px;
+  border-radius: 24px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  backdrop-filter: blur(20px);
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.lobby-title {
+  text-align: center;
+  font-size: var(--fs-xxl);
+  font-weight: 900;
+  letter-spacing: 2px;
+  background: linear-gradient(135deg, var(--color-good) 0%, #fff 50%, var(--color-evil) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 2px 10px rgba(0,0,0,0.5));
+  margin-bottom: 10px;
+}
+
+.lobby-subtitle {
+  text-align: center;
+  color: #a0aec0;
+  font-size: var(--fs-sm);
+  margin-top: -20px;
+  margin-bottom: 20px;
+}
+
+.lobby-cards-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+@media (max-width: 600px) {
+  .lobby-cards-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.lobby-card {
+  padding: 30px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--glass-border);
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+.lobby-card:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.15);
+  transform: translateY(-4px);
+}
+.lobby-card-title {
+  font-size: var(--fs-lg);
+  font-weight: 700;
+  color: var(--color-good);
+}
+
+.lobby-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.lobby-form-group label {
+  font-size: var(--fs-xs);
+  color: #a0aec0;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.lobby-players-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 15px;
+}
+.lobby-player-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--glass-border);
+}
+.lobby-player-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.lobby-player-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--color-good) 0%, var(--color-evil) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  color: #fff;
+  font-size: var(--fs-xs);
+}
+.lobby-player-host-tag {
+  font-size: 10px;
+  padding: 2px 6px;
+  background: var(--color-good);
+  color: #000;
+  font-weight: 800;
+  border-radius: 4px;
+}
+
+/* 角色選擇面板 */
+.role-select-section {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  border-top: 1px solid var(--glass-border);
+  padding-top: 20px;
+}
+.role-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 12px;
+}
+.role-badge {
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid var(--glass-border);
+  background: rgba(255, 255, 255, 0.02);
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  position: relative;
+}
+.role-badge.good {
+  color: var(--color-good);
+}
+.role-badge.evil {
+  color: var(--color-evil);
+}
+.role-badge.selected.good {
+  background: rgba(212, 175, 55, 0.15);
+  border-color: var(--color-good);
+  box-shadow: 0 0 10px rgba(212, 175, 55, 0.2);
+}
+.role-badge.selected.evil {
+  background: rgba(157, 78, 221, 0.15);
+  border-color: var(--color-evil);
+  box-shadow: 0 0 10px rgba(157, 78, 221, 0.2);
+}
+.role-badge:hover {
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.05);
+  z-index: 10;
+}
+.role-badge-name {
+  font-weight: bold;
+  font-size: var(--fs-sm);
+}
+.role-badge-desc {
+  font-size: 10px;
+  color: #a0aec0;
+}
+
+/* 7. 遊戲主盤面 (Game Board & Table) */
+.game-container {
+  display: flex;
+  flex-direction: column;
+  width: 100vw;
+  height: 100vh;
+  padding: 20px;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+}
+
+/* 環形圓桌排版 */
+.table-area {
+  position: relative;
+  width: 600px;
+  height: 600px;
+  margin: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (max-width: 768px) {
+  .table-area {
+    width: 320px;
+    height: 320px;
+  }
+}
+
+/* 圓桌本體 */
+.game-table {
+  width: 360px;
+  height: 360px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(20, 24, 45, 0.95) 0%, rgba(10, 12, 23, 0.98) 100%);
+  border: 6px solid rgba(255, 255, 255, 0.05);
+  box-shadow: inset 0 0 30px rgba(0,0,0,0.8), 0 15px 40px rgba(0,0,0,0.6);
+  position: absolute;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  padding: 30px;
+}
+@media (max-width: 768px) {
+  .game-table {
+    width: 200px;
+    height: 200px;
+    padding: 10px;
+  }
+}
+
+/* 圓桌內任務版圖 */
+.table-board-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  color: #fff;
+  text-align: center;
+}
+.board-quests-row {
+  display: flex;
+  gap: 12px;
+}
+.board-quest-node {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.04);
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  font-weight: 800;
+  font-size: var(--fs-sm);
+  transition: all 0.3s ease;
+}
+@media (max-width: 768px) {
+  .board-quest-node {
+    width: 30px;
+    height: 30px;
+    font-size: var(--fs-xs);
+  }
+}
+.board-quest-node.active {
+  border-color: var(--color-good);
+  box-shadow: 0 0 15px var(--color-good-glow);
+  transform: scale(1.1);
+}
+.board-quest-node.success {
+  background: rgba(0, 230, 118, 0.2);
+  border-color: var(--color-success);
+  color: var(--color-success);
+}
+.board-quest-node.failed {
+  background: rgba(255, 23, 68, 0.2);
+  border-color: var(--color-error);
+  color: var(--color-error);
+}
+.board-quest-node-players {
+  font-size: 10px;
+  color: #a0aec0;
+  margin-top: -2px;
+}
+.board-quest-node-amulet {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: var(--color-warning);
+  color: #000;
+  font-size: 8px;
+  font-weight: bold;
+  padding: 1px 4px;
+  border-radius: 4px;
+}
+
+/* 環繞玩家節點 */
+.player-node {
+  position: absolute;
+  width: 90px;
+  height: 90px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  --angle: 0deg;
+  --radius: 230px;
+  transform: translate(calc(cos(var(--angle)) * var(--radius)), calc(sin(var(--angle)) * var(--radius)));
+}
+@media (max-width: 768px) {
+  .player-node {
+    width: 70px;
+    height: 70px;
+    --radius: 120px;
+  }
+}
+
+.player-node-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: rgba(30, 35, 60, 0.9);
+  border: 3px solid var(--glass-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--fs-lg);
+  font-weight: 900;
+  color: #fff;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+  position: relative;
+}
+@media (max-width: 768px) {
+  .player-node-avatar {
+    width: 44px;
+    height: 44px;
+    font-size: var(--fs-md);
+  }
+}
+.player-node:hover .player-node-avatar {
+  transform: scale(1.1);
+}
+
+.player-node-name {
+  margin-top: 6px;
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  text-align: center;
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+}
+
+/* 指示物標誌懸浮於頭像 */
+.badge-indicator {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: bold;
+  border: 1px solid rgba(255,255,255,0.2);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+}
+.badge-leader {
+  top: -4px;
+  left: -4px;
+  background: radial-gradient(circle, var(--color-good) 0%, #b8860b 100%);
+  color: #000;
+  box-shadow: 0 0 10px var(--color-good-glow);
+}
+.badge-magic {
+  top: -4px;
+  right: -4px;
+  background: radial-gradient(circle, #00f0ff 0%, #0077b6 100%);
+  color: #fff;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+  animation: pulse 1.5s infinite;
+}
+.badge-team {
+  bottom: -4px;
+  right: -4px;
+  background: radial-gradient(circle, #fff 0%, #a0aec0 100%);
+  color: #000;
+}
+.badge-amulet {
+  bottom: -4px;
+  left: -4px;
+  background: radial-gradient(circle, var(--color-warning) 0%, #c85a00 100%);
+  color: #000;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); box-shadow: 0 0 5px rgba(0, 240, 255, 0.4); }
+  50% { transform: scale(1.15); box-shadow: 0 0 15px rgba(0, 240, 255, 0.8); }
+  100% { transform: scale(1); box-shadow: 0 0 5px rgba(0, 240, 255, 0.4); }
+}
+
+/* 金色流動邊框 (當前行動領袖 / 選擇中) */
+.player-node.active-leader .player-node-avatar {
+  border-color: var(--color-good);
+  box-shadow: 0 0 20px var(--color-good-glow);
+  animation: leader-glow 2s infinite alternate;
+}
+@keyframes leader-glow {
+  from { box-shadow: 0 0 10px rgba(212, 175, 55, 0.4); }
+  to { box-shadow: 0 0 25px rgba(212, 175, 55, 0.8); }
+}
+
+/* 離線/斷線玩家灰色調 */
+.player-node.offline {
+  opacity: 0.4;
+  filter: grayscale(1);
+}
+
+/* 8. 玩家控制台面板 (Player Dashboard / Bottom Control) */
+.dashboard-area {
+  width: 90vw;
+  max-width: 800px;
+  margin-bottom: 20px;
+  z-index: 5;
+}
+
+.dashboard-panel {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: var(--glass-shadow);
+  backdrop-filter: blur(20px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+@media (max-width: 600px) {
+  .dashboard-panel {
+    flex-direction: column;
+    text-align: center;
+    gap: 15px;
+  }
+}
+
+.dashboard-left {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+/* 秘密身分卡 - 遮罩與懸浮解鎖 */
+.secret-role-card {
+  width: 100px;
+  height: 140px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #1f233c 0%, #0f101d 100%);
+  border: 1px solid var(--glass-border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  cursor: pointer;
+  overflow: hidden;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.secret-role-card:hover {
+  transform: translateY(-5px) rotate(2deg);
+}
+
+.secret-role-card-back {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle, #272c4e 0%, #0d0f1a 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  transition: opacity 0.3s ease;
+  font-weight: 900;
+  color: var(--color-good);
+  letter-spacing: 1px;
+  border: 2px dashed rgba(212, 175, 55, 0.2);
+}
+.secret-role-card:active .secret-role-card-back {
+  opacity: 0;
+}
+
+.secret-role-card-front {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 10px;
+  text-align: center;
+}
+.secret-role-card-front.good {
+  border: 2px solid var(--color-good);
+  color: var(--color-good);
+}
+.secret-role-card-front.evil {
+  border: 2px solid var(--color-evil);
+  color: var(--color-evil);
+}
+
+.secret-role-avatar {
+  font-size: 32px;
+}
+.secret-role-name {
+  font-weight: 900;
+  font-size: var(--fs-md);
+}
+.secret-role-alignment {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  opacity: 0.8;
+}
+
+/* 遊戲進度與當前行動引導 */
+.dashboard-center {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.status-tip {
+  font-size: var(--fs-xs);
+  color: #a0aec0;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.status-main {
+  font-size: var(--fs-lg);
+  font-weight: 800;
+  color: #fff;
+}
+
+/* 9. 全螢幕夜間/相認 Overlay 遮罩 */
+.reveal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(3, 4, 8, 0.98);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 40px;
+  padding: 40px;
+  animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.reveal-title {
+  font-size: var(--fs-xl);
+  font-weight: 900;
+  color: var(--color-good);
+  letter-spacing: 2px;
+  text-shadow: 0 0 15px var(--color-good-glow);
+  text-align: center;
+}
+
+.reveal-box {
+  width: 90%;
+  max-width: 500px;
+  padding: 30px;
+  border-radius: 20px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  text-align: center;
+}
+
+.reveal-eye-icon {
+  font-size: 60px;
+  animation: pulse-eye 2s infinite;
+}
+@keyframes pulse-eye {
+  0% { transform: scale(1); opacity: 0.8; }
+  50% { transform: scale(1.1); opacity: 1; filter: drop-shadow(0 0 15px rgba(255,255,255,0.2)); }
+  100% { transform: scale(1); opacity: 0.8; }
+}
+
+.reveal-info-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+.reveal-info-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 20px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.04);
+}
+.reveal-info-name {
+  font-weight: 700;
+}
+.reveal-info-role {
+  font-size: var(--fs-xs);
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 800;
+}
+.reveal-info-role.good {
+  background: rgba(212, 175, 55, 0.2);
+  color: var(--color-good);
+  border: 1px solid var(--color-good);
+}
+.reveal-info-role.evil {
+  background: rgba(157, 78, 221, 0.2);
+  color: var(--color-evil);
+  border: 1px solid var(--color-evil);
+}
+
+/* 10. 互動彈窗 (投票/護身符/指認獵殺等) */
+.game-overlay-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.8);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(8px);
+}
+
+.overlay-modal-content {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 24px;
+  padding: 35px;
+  width: 90vw;
+  max-width: 500px;
+  box-shadow: var(--glass-shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+  animation: scaleUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes scaleUp {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.overlay-modal-title {
+  font-size: var(--fs-xl);
+  font-weight: 900;
+  text-align: center;
+}
+
+/* 投票用任務牌 CSS */
+.vote-cards-row {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+}
+.vote-card {
+  width: 120px;
+  height: 170px;
+  border-radius: 16px;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.3s ease;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.4);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  font-weight: 900;
+}
+.vote-card.success {
+  background: linear-gradient(135deg, #1b4d3e 0%, #0d261e 100%);
+  border: 2px solid var(--color-success);
+  color: var(--color-success);
+}
+.vote-card.success:hover {
+  box-shadow: 0 0 25px rgba(0, 230, 118, 0.6);
+  transform: translateY(-10px) scale(1.05);
+}
+.vote-card.failed {
+  background: linear-gradient(135deg, #6b0c22 0%, #3a0612 100%);
+  border: 2px solid var(--color-error);
+  color: var(--color-error);
+}
+.vote-card.failed:hover {
+  box-shadow: 0 0 25px rgba(255, 23, 68, 0.6);
+  transform: translateY(-10px) scale(1.05);
+}
+.vote-card-icon {
+  font-size: 40px;
+}
+
+/* 最終指認舉手 */
+.pointing-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 250px;
+  overflow-y: auto;
+  padding-right: 5px;
+}
+.pointing-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 15px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--glass-border);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.pointing-item:hover {
+  background: rgba(255,255,255,0.06);
+}
+.pointing-item.selected {
+  border-color: var(--color-good);
+  background: rgba(212, 175, 55, 0.1);
+}
+
+/* 任務開牌動畫區 */
+.reveal-cards-area {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 15px;
+}
+.opened-card {
+  width: 70px;
+  height: 100px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: var(--fs-xs);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+  animation: cardReveal 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+.opened-card.success {
+  background: var(--color-success);
+  color: #000;
+}
+.opened-card.failed {
+  background: var(--color-error);
+  color: #fff;
+}
+@keyframes cardReveal {
+  from { transform: scale(0) rotateY(180deg); opacity: 0; }
+  to { transform: scale(1) rotateY(0deg); opacity: 1; }
+}
+
+/* 聊天與紀錄區 (Side drawer / Floating panel) */
+.room-id-tag {
+  font-family: monospace;
+  font-weight: bold;
+  font-size: var(--fs-lg);
+  color: var(--color-good);
+  background: rgba(255, 255, 255, 0.05);
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 1px dashed var(--color-good);
+  transition: all 0.2s ease;
+}
+.room-id-tag:hover {
+  background: rgba(212, 175, 55, 0.15);
+}
+
+.top-bar {
+  display: flex;
+  justify-content: space-between;
+  width: 90vw;
+  max-width: 800px;
+  align-items: center;
+  z-index: 5;
+}
+
+/* 系統消息與日誌 */
+.logs-panel {
+  width: 100%;
+  background: rgba(0,0,0,0.3);
+  border-radius: 12px;
+  height: 100px;
+  overflow-y: auto;
+  padding: 10px;
+  font-size: var(--fs-xs);
+  color: #a0aec0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border: 1px solid rgba(255,255,255,0.03);
+}
+.log-entry {
+  line-height: 1.4;
+}
+.log-entry.highlight {
+  color: var(--color-good);
+}
+.log-entry.alert {
+  color: var(--color-error);
+}
+.log-entry.system {
+  color: #63b3ed;
+}
+
+/* 捲軸美化 */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* 11. Toast 提示通知 */
+.toast-notification {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  color: #fff;
+  padding: 12px 24px;
+  border-radius: 12px;
+  box-shadow: var(--glass-shadow);
+  backdrop-filter: blur(10px);
+  z-index: 1000;
+  transform: translateY(100px);
+  opacity: 0;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  font-weight: 600;
+  font-size: var(--fs-sm);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  pointer-events: none;
+}
+.toast-notification.show {
+  transform: translateY(0);
+  opacity: 1;
+}
+.toast-notification.success {
+  border-color: var(--color-good);
+  box-shadow: 0 0 15px rgba(212, 175, 55, 0.2);
+}
+.toast-notification.error {
+  border-color: var(--color-error);
+  box-shadow: 0 0 15px rgba(255, 23, 68, 0.2);
+}
+
+
+/* ==========================================================================
+   Antigravity Visual Enhancement & Responsive System
+   ========================================================================== */
+
+/* 1. 三欄式響應式自適應佈局 */
+:root {
+  --radius: 190px; /* 大螢幕極座標頭像環繞半徑 */
+}
+
+@media (min-width: 1100px) {
+  .game-container {
+    max-width: 1250px !important;
+  }
+  .game-main-layout {
+    display: grid !important;
+    grid-template-columns: 240px 1fr 300px !important;
+    gap: 20px !important;
+    align-items: start !important;
+    width: 100% !important;
+    max-width: 1250px !important;
+  }
+  .game-left-panel {
+    grid-column: 1 !important;
+    position: sticky;
+    top: 20px;
+  }
+  .table-area {
+    grid-column: 2 !important;
+    margin: 0 auto;
+  }
+  .game-right-panel {
+    grid-column: 3 !important;
+    position: sticky;
+    top: 20px;
+  }
+}
+
+@media (max-width: 1099px) and (min-width: 768px) {
+  :root {
+    --radius: 145px; /* 平板中等半徑 */
+  }
+  .game-main-layout {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    gap: 20px !important;
+  }
+  .game-left-panel {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  .role-list {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+    justify-content: center !important;
+  }
+  .game-role-card {
+    flex: 1 1 140px !important;
+    max-width: 180px !important;
+  }
+  .table-area {
+    flex: 1 1 500px !important;
+  }
+  .game-right-panel {
+    flex: 1 1 280px !important;
+  }
+}
+
+@media (max-width: 767px) {
+  :root {
+    --radius: 105px; /* 手機小半徑 */
+  }
+  .game-main-layout {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 15px !important;
+    padding: 0 10px !important;
+  }
+  .game-left-panel {
+    width: 100% !important;
+  }
+  .role-list {
+    display: flex !important;
+    flex-direction: row !important;
+    overflow-x: auto !important;
+    padding-bottom: 8px !important;
+    gap: 8px !important;
+    justify-content: flex-start !important;
+  }
+  .game-role-card {
+    flex: 0 0 110px !important;
+    padding: 6px 10px !important;
+  }
+  .table-area {
+    width: 100% !important;
+    transform: scale(0.9) !important;
+    margin: -20px 0 !important;
+  }
+  .game-right-panel {
+    width: 100% !important;
+  }
+}
+
+/* 2. 左側常駐毛玻璃角色名冊 */
+.game-left-panel {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  padding: 15px;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.37);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.game-left-panel .panel-title {
+  margin: 0;
+  font-size: 13.5px;
+  font-weight: bold;
+  letter-spacing: 1px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 8px;
+  color: #fff;
+  text-shadow: 0 0 8px rgba(255,255,255,0.2);
+}
+
+.role-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.game-role-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  cursor: help;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.game-role-card:hover {
+  background: rgba(255, 255, 255, 0.07);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.game-role-card.good {
+  border-left: 3px solid var(--color-good);
+}
+.game-role-card.good:hover {
+  border-color: var(--color-good);
+  box-shadow: 0 0 10px rgba(212, 175, 55, 0.15);
+}
+
+.game-role-card.evil {
+  border-left: 3px solid var(--color-error);
+}
+.game-role-card.evil:hover {
+  border-color: var(--color-error);
+  box-shadow: 0 0 10px rgba(255, 23, 68, 0.15);
+}
+
+.role-avatar {
+  font-size: 18px;
+}
+
+.role-name {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: #e2e8f0;
+}
+
+/* 3. 精緻 Glassmorphism Hover Tooltip 氣泡 */
+.role-tooltip {
+  display: block;
+  position: absolute;
+  left: 105%;
+  top: 50%;
+  transform: translateY(-50%) scale(0.9);
+  width: 240px;
+  padding: 12px;
+  background: rgba(15, 18, 36, 0.95);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+  backdrop-filter: blur(15px);
+  z-index: 100;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* 讓小箭頭指向卡片 */
+.role-tooltip::before {
+  content: "";
+  position: absolute;
+  right: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  border-width: 6px;
+  border-style: solid;
+  border-color: transparent rgba(15, 18, 36, 0.95) transparent transparent;
+}
+
+.game-role-card:hover .role-tooltip,
+.role-badge:hover .role-tooltip {
+  opacity: 1;
+  transform: translateY(-50%) scale(1);
+}
+
+/* 響應式：在平板與手機上，Tooltip 向上彈出以免超出視窗 */
+@media (max-width: 1099px) {
+  .role-tooltip {
+    left: 50%;
+    bottom: 115%;
+    top: auto;
+    transform: translateX(-50%) scale(0.9);
+  }
+  .role-tooltip::before {
+    right: auto;
+    left: 50%;
+    top: 100%;
+    transform: translateX(-50%);
+    border-color: rgba(15, 18, 36, 0.95) transparent transparent transparent;
+  }
+  .game-role-card:hover .role-tooltip,
+  .role-badge:hover .role-tooltip {
+    transform: translateX(-50%) scale(1);
+  }
+}
+
+.tooltip-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  padding-bottom: 6px;
+  margin-bottom: 6px;
+}
+
+.role-alignment-badge {
+  font-size: 9px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-weight: bold;
+  margin-left: auto;
+}
+
+.role-alignment-badge.good {
+  background: rgba(212, 175, 55, 0.2);
+  color: var(--color-good);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+}
+
+.role-alignment-badge.evil {
+  background: rgba(255, 23, 68, 0.2);
+  color: var(--color-error);
+  border: 1px solid rgba(255, 23, 68, 0.3);
+}
+
+.tooltip-desc {
+  font-size: 11px;
+  color: #cbd5e0;
+  line-height: 1.4;
+}
+
+/* 4. 常駐聖物指示物 Legend 面板 */
+.legend-panel {
+  width: 100%;
+  max-width: 900px;
+  margin: 15px auto 5px auto;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  padding: 12px 18px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+}
+
+.legend-title {
+  font-size: 11.5px;
+  font-weight: 900;
+  color: var(--color-good);
+  text-align: center;
+  letter-spacing: 1.5px;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  text-shadow: 0 0 6px rgba(212, 175, 55, 0.3);
+}
+
+.legend-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 8px;
+}
+
+.legend-item {
+  font-size: 10px;
+  color: #a0aec0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legend-icon {
+  font-size: 12px;
+  display: inline-block;
+  text-shadow: 0 0 4px rgba(255,255,255,0.3);
+}
+
+/* 5. 探索大事記垂直加長與三色宣告 */
+.chronicles-panel {
+  max-height: 400px !important; /* 垂直拉長 */
+  transition: all 0.3s ease;
+}
+
+/* 大事記捲軸美化 */
+.chronicles-panel::-webkit-scrollbar,
+.pointing-panel::-webkit-scrollbar {
+  width: 4px;
+}
+
+.chronicles-panel::-webkit-scrollbar-thumb,
+.pointing-panel::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.1);
+  border-radius: 2px;
+}
+
+.chronicles-panel::-webkit-scrollbar-thumb:hover,
+.pointing-panel::-webkit-scrollbar-thumb:hover {
+  background: rgba(255,255,255,0.25);
+}
+
+/* 6. 動態極座標頭像軌道（自適應半徑） */
+/* 藉由在 @media 中重新賦值 --radius 變數，完美自適應縮小軌道半徑 */
+.player-node {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(
+    calc(cos(var(--angle)) * var(--radius) - 24px),
+    calc(sin(var(--angle)) * var(--radius) - 24px)
+  ) !important;
+  transition: all 0.5s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+}
+
+/* 讓魔法和護身符指示物閃爍，增添科幻美感 */
+.board-quest-node-amulet {
+  animation: pulse-gold 2s infinite ease-in-out;
+}
+
+@keyframes pulse-gold {
+  0% { transform: scale(1); filter: drop-shadow(0 0 2px rgba(212,175,55,0.5)); }
+  50% { transform: scale(1.15); filter: drop-shadow(0 0 8px rgba(212,175,55,0.9)); }
+  100% { transform: scale(1); filter: drop-shadow(0 0 2px rgba(212,175,55,0.5)); }
+}
