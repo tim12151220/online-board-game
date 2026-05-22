@@ -527,7 +527,7 @@ export class UIRenderer {
 
       // 身份提示標籤 (知情者提示)
       let tipHTML = '';
-      const isMySelfEvil = myPlayer.alignment === ALIGNMENT.EVIL && myPlayer.roleId !== 'CHANGELING';
+      const isMySelfEvil = myPlayer.alignment === ALIGNMENT.EVIL && myPlayer.roleId !== 'CHANGELING' && myPlayer.roleId !== 'PRINCE';
       
       if (p.id !== myPlayer.id) {
         // 1. 如果我是邪惡盟友且對方也是邪惡同夥 (不含幻形妖)
