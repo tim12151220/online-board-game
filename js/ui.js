@@ -574,7 +574,9 @@ export class UIRenderer {
         <div class="player-node ${activeClass} ${offlineClass}" style="--angle: ${angleRad}rad;">
           <div class="player-node-avatar">
             ${p.name.charAt(0)}
-            ${badgesHTML}
+            <div class="player-badges-container">
+              ${badgesHTML}
+            </div>
           </div>
           <div class="player-node-name" style="${p.id === myPlayer.id ? 'color:var(--color-good); font-weight:900;' : ''}">
             ${p.name} ${p.id === myPlayer.id ? '(你)' : ''}

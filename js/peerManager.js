@@ -12,7 +12,17 @@ const PEER_CONFIG = {
       { urls: 'stun:stun1.l.google.com:19302' },
       { urls: 'stun:stun2.l.google.com:19302' },
       { urls: 'stun:stun3.l.google.com:19302' },
-      { urls: 'stun:stun4.l.google.com:19302' }
+      { urls: 'stun:stun4.l.google.com:19302' },
+      // 新增免費公共 TURN 伺服器，專門用來處理 Symmetric NAT (對稱型網絡/企業學校防火牆) 的中繼傳輸
+      {
+        urls: [
+          'turn:openrelay.metered.ca:80',
+          'turn:openrelay.metered.ca:443',
+          'turn:openrelay.metered.ca:443?transport=tcp'
+        ],
+        username: 'openrelay',
+        credential: 'openrelay'
+      }
     ]
   }
 };
@@ -159,7 +169,17 @@ export class PeerManager {
   setupClientConnection(conn) {
     this.hostConnection = conn;
 
+    // 建立 10 秒超時監控，避免 PeerJS 在打洞失敗時無限期掛起
+    const connectionTimeout = setTimeout(() => {
+      if (!this.hostConnection || !this.hostConnection.open) {
+        console.warn('連線至 Host 逾時。');
+        this.onStatus('尋找房間超時！請檢查房號是否正確，或嘗試切換網路環境（例如關閉 Wi-Fi 改用 4G 行動網路、或關閉 VPN/公司防火牆）。', true);
+        conn.close();
+      }
+    }, 10000);
+
     conn.on('open', () => {
+      clearTimeout(connectionTimeout);
       this.onStatus('已成功連線至圓桌！正在發送加入請求...', false);
       
       // 發送 JOIN 訊息給 Host

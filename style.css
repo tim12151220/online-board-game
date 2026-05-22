@@ -378,7 +378,25 @@ input[type="text"]:focus {
   justify-content: space-between;
   align-items: center;
   position: relative;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* 奢華毛玻璃質感滾動條 */
+.game-container::-webkit-scrollbar {
+  width: 6px;
+}
+.game-container::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.01);
+}
+.game-container::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.02);
+  backdrop-filter: blur(5px);
+}
+.game-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(212, 175, 55, 0.25);
 }
 
 /* 環形圓桌排版 */
@@ -1093,34 +1111,43 @@ input[type="text"]:focus {
 
 /* 1. 三欄式響應式自適應佈局 */
 :root {
-  --radius: 190px; /* 大螢幕極座標頭像環繞半徑 */
+  --radius: 220px; /* 大螢幕極座標頭像環繞半徑 */
 }
 
 @media (min-width: 1100px) {
   .game-container {
-    max-width: 1250px !important;
+    max-width: 95vw !important;
   }
   .game-main-layout {
     display: grid !important;
-    grid-template-columns: 240px 1fr 300px !important;
-    gap: 20px !important;
+    grid-template-columns: 280px 1.2fr 340px !important;
+    gap: 30px !important;
     align-items: start !important;
     width: 100% !important;
-    max-width: 1250px !important;
+    max-width: 1550px !important;
+    margin: 0 auto;
   }
   .game-left-panel {
     grid-column: 1 !important;
     position: sticky;
     top: 20px;
+    z-index: 10;
   }
   .table-area {
     grid-column: 2 !important;
     margin: 0 auto;
+    width: 680px !important;
+    height: 680px !important;
+  }
+  .game-table {
+    width: 400px !important;
+    height: 400px !important;
   }
   .game-right-panel {
     grid-column: 3 !important;
     position: sticky;
     top: 20px;
+    z-index: 10;
   }
 }
 
@@ -1451,4 +1478,54 @@ input[type="text"]:focus {
   0% { transform: scale(1); filter: drop-shadow(0 0 2px rgba(212,175,55,0.5)); }
   50% { transform: scale(1.15); filter: drop-shadow(0 0 8px rgba(212,175,55,0.9)); }
   100% { transform: scale(1); filter: drop-shadow(0 0 2px rgba(212,175,55,0.5)); }
+}
+
+/* 7. 聖物與狀態指示物托盤 - 避免多指示物覆蓋 */
+.player-badges-container {
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 3px;
+  width: auto;
+  max-width: 90px;
+  flex-wrap: wrap;
+  z-index: 5;
+  pointer-events: none;
+}
+
+/* 將所有托盤內的 badge-indicator 改為相對或 Flex 內的子元素，並覆蓋 inline 樣式 */
+.player-badges-container .badge-indicator {
+  position: relative !important;
+  top: auto !important;
+  bottom: auto !important;
+  left: auto !important;
+  right: auto !important;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: bold;
+  border: 1px solid rgba(255,255,255,0.2);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+  flex-shrink: 0;
+  margin: 0 !important;
+  transform: none !important;
+}
+
+/* 確保 Magic 指示物的呼吸燈僅以陰影漸變運作，防干擾 Flex 排版 */
+.player-badges-container .badge-magic {
+  animation: pulse-magic-shadow 1.5s infinite !important;
+}
+
+@keyframes pulse-magic-shadow {
+  0% { box-shadow: 0 0 5px rgba(0, 240, 255, 0.4); }
+  50% { box-shadow: 0 0 15px rgba(0, 240, 255, 0.8); }
+  100% { box-shadow: 0 0 5px rgba(0, 240, 255, 0.4); }
 }
