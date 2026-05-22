@@ -184,15 +184,29 @@ export function getNightRevealInfo(player, gameState) {
 
     // 6. 邪惡陣營互認 (除了幻形妖)
     case 'MORGAN_LE_FAY':
+      info.revealText = '【魔女】請睜眼確認同夥。你另外洞悉了【王儲】的身份！';
+      allPlayers.forEach(p => {
+        if (p.id === player.id) return;
+        // 看到其他邪惡爪牙 (不含幻形妖)
+        if (p.alignment === ALIGNMENT.EVIL && p.roleId !== 'CHANGELING') {
+          info.visiblePlayers.push({ id: p.id, name: p.name, roleName: '邪惡同夥', alignment: ALIGNMENT.EVIL });
+        }
+        // 魔女另外看到王儲 (正義陣營)
+        if (p.roleId === 'PRINCE') {
+          info.visiblePlayers.push({ id: p.id, name: p.name, roleName: '王儲', alignment: ALIGNMENT.GOOD });
+        }
+      });
+      break;
+
     case 'MINION_OF_MORDRED':
     case 'BARBARIAN':
     case 'SABOTEUR':
       info.revealText = '邪惡爪牙睜眼，你們確認了彼此的同夥！';
       allPlayers.forEach(p => {
         if (p.id === player.id) return;
-        // 邪惡方互認 (不含幻形妖，但摩根勒菲能看到王儲)
+        // 邪惡方互認 (不含幻形妖，且不知道王儲是誰)
         if (p.alignment === ALIGNMENT.EVIL && p.roleId !== 'CHANGELING') {
-          info.visiblePlayers.push({ id: p.id, name: p.name, roleName: p.roleId === 'PRINCE' ? '王儲' : '邪惡同夥', alignment: ALIGNMENT.EVIL });
+          info.visiblePlayers.push({ id: p.id, name: p.name, roleName: '邪惡同夥', alignment: ALIGNMENT.EVIL });
         }
       });
       break;

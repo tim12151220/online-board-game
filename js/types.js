@@ -114,6 +114,14 @@ export const CHARACTERS = {
     desc: '如果成為任務五的領袖，指派隊員前必須當眾公開自己的身份。',
     minPlayers: 5
   },
+  PRINCE: {
+    id: 'PRINCE',
+    name: '王儲',
+    alignment: ALIGNMENT.GOOD,
+    avatar: '🍷',
+    desc: '正義陣營。自己不知道邪惡方，但夜間相認時閉眼並豎起大拇指，讓摩根勒菲看到他是王儲。',
+    minPlayers: 4
+  },
 
   // 邪惡陣營 (Evil)
   MORGAN_LE_FAY: {
@@ -122,14 +130,6 @@ export const CHARACTERS = {
     alignment: ALIGNMENT.EVIL,
     avatar: '🔮',
     desc: '必選角色。不受魔法指示物效果影響，仍可出任務失敗牌。',
-    minPlayers: 4
-  },
-  PRINCE: {
-    id: 'PRINCE',
-    name: '王儲',
-    alignment: ALIGNMENT.EVIL,
-    avatar: '🍷',
-    desc: '不知道其他邪惡方，但夜間相認時會讓摩根勒菲知道他是王儲。',
     minPlayers: 4
   },
   CHANGELING: {
