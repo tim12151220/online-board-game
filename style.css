@@ -1436,6 +1436,13 @@ input[type="text"]:focus {
 /* 5. 探索大事記垂直加長與三色宣告 */
 .chronicles-panel {
   max-height: 400px !important; /* 垂直拉長 */
+  overflow-y: auto;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  padding: 15px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.37);
+  box-sizing: border-box;
   transition: all 0.3s ease;
 }
 
@@ -1528,4 +1535,26 @@ input[type="text"]:focus {
   0% { box-shadow: 0 0 5px rgba(0, 240, 255, 0.4); }
   50% { box-shadow: 0 0 15px rgba(0, 240, 255, 0.8); }
   100% { box-shadow: 0 0 5px rgba(0, 240, 255, 0.4); }
+}
+
+/* 8. 右下角精美低調版號標記 */
+.version-badge {
+  position: fixed;
+  bottom: 12px;
+  right: 15px;
+  background: rgba(18, 18, 29, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: rgba(255, 255, 255, 0.35);
+  font-family: 'Inter', -apple-system, sans-serif;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  z-index: 10000;
+  pointer-events: none;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  text-transform: uppercase;
 }

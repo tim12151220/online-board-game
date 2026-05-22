@@ -1390,7 +1390,7 @@ export class UIRenderer {
       const allSubmitted = requiredPointers.every(p => gameState.submittedPointings && gameState.submittedPointings.includes(p.id));
 
       pointingSectionHTML = `
-        <div class="pointing-panel" style="width:280px; background:var(--glass-bg); border:1px solid var(--glass-border); border-radius:12px; padding:15px; display:flex; flex-direction:column; gap:10px; max-height:220px; overflow-y:auto; box-shadow:0 8px 32px rgba(0,0,0,0.37);">
+        <div class="pointing-panel" style="width:100%; box-sizing:border-box; background:var(--glass-bg); border:1px solid var(--glass-border); border-radius:12px; padding:15px; display:flex; flex-direction:column; gap:10px; max-height:220px; overflow-y:auto; box-shadow:0 8px 32px rgba(0,0,0,0.37);">
           <h3 style="margin:0; font-size:13px; font-weight:bold; color:var(--color-error); border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:8px; display:flex; align-items:center; gap:6px;">👉 指認現場追蹤</h3>
           <div style="display:flex; flex-direction:column; gap:8px;">
             ${gameState.players.map(p => {
