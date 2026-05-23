@@ -1558,3 +1558,115 @@ input[type="text"]:focus {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
   text-transform: uppercase;
 }
+
+/* 9. 聖物 Legend 右側面板與 Hover Tooltip 樣式 */
+.relics-legend-panel {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  padding: 12px 15px;
+  box-shadow: var(--glass-shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.relics-legend-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-good);
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 6px;
+}
+
+.relics-badge-row {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-start;
+  align-items: center;
+  padding: 4px 0;
+}
+
+.relics-badge-item {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.relics-badge-item:hover {
+  background: rgba(212, 175, 55, 0.15);
+  border-color: var(--color-good);
+  transform: translateY(-2px);
+  box-shadow: 0 0 10px var(--color-good-glow);
+}
+
+.relics-badge-icon {
+  font-size: 16px;
+}
+
+/* Tooltip 氣泡設計 */
+.relics-tooltip {
+  position: absolute;
+  bottom: 42px; /* 彈出在徽章上方 */
+  left: 50%;
+  transform: translateX(-50%) scale(0.9);
+  width: 200px;
+  background: rgba(10, 12, 22, 0.95);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--glass-border-gold);
+  border-radius: 8px;
+  padding: 10px 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 100;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.relics-badge-item:hover .relics-tooltip {
+  opacity: 1;
+  transform: translateX(-50%) scale(1);
+  pointer-events: auto;
+}
+
+/* 為了防止左側邊緣被切，微調前兩個徽章的 Tooltip 位置 */
+.relics-badge-item:nth-child(1) .relics-tooltip,
+.relics-badge-item:nth-child(2) .relics-tooltip {
+  left: -10px;
+  right: auto;
+  transform: translateX(0) scale(0.9);
+}
+
+.relics-badge-item:nth-child(1):hover .relics-tooltip,
+.relics-badge-item:nth-child(2):hover .relics-tooltip {
+  transform: translateX(0) scale(1);
+}
+
+.relics-tooltip-header {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-good);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  padding-bottom: 4px;
+}
+
+.relics-tooltip-desc {
+  font-size: 10px;
+  color: #cbd5e0;
+  line-height: 1.4;
+  text-align: justify;
+}

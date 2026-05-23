@@ -193,7 +193,7 @@ export const CHARACTERS = {
     name: '破壞者',
     alignment: ALIGNMENT.EVIL,
     avatar: '💥',
-    desc: '如果持有「退伍領袖指示物」，就必須出任務失敗牌，魔法指示物無效。',
+    desc: '屬於邪惡方。在任務中可以自由選擇投出成功或失敗牌。',
     minPlayers: 4
   }
 };

@@ -49,7 +49,8 @@ export function initGame(players, characterIds = []) {
 
   // 洗牌分配身分
   const shuffledRoles = shuffle(finalRoles);
-  const gamePlayers = players.map((p, idx) => {
+  const shuffledPlayers = shuffle(players); // 座位隨機洗牌
+  const gamePlayers = shuffledPlayers.map((p, idx) => {
     const roleId = shuffledRoles[idx];
     const roleMeta = CHARACTERS[roleId] || CHARACTERS.LOYAL_SERVANT;
     return {
@@ -299,19 +300,12 @@ export function castVote(gameState, playerId, voteValue) {
     if (voter.roleId === 'MORGAN_LE_FAY') {
       // 摩根勒菲免疫魔法，仍可投失敗！
       actualVote = voteValue;
-    } else if (voter.roleId === 'SABOTEUR' && voter.isExLeader) {
-      // 破壞者如果持有退伍領袖，魔法無效，必須出失敗！
-      actualVote = 'FAILED';
     }
   }
 
   // 瘋子/破壞者/野蠻人限制
   if (voter.roleId === 'MADMAN' && !voter.hasMagicToken) {
     // 瘋子無魔法必須出失敗
-    actualVote = 'FAILED';
-  }
-  if (voter.roleId === 'SABOTEUR' && voter.isExLeader) {
-    // 破壞者拿著 Ex-Leader 必須出失敗
     actualVote = 'FAILED';
   }
   if (voter.roleId === 'BARBARIAN' && gameState.currentQuestIndex >= 3) {
@@ -558,8 +552,8 @@ export function selectNextLeader(gameState, nextLeaderId, amuletTargetId) {
  */
 export function assignAmulet(gameState, targetPlayerId) {
   const target = gameState.players.find(p => p.id === targetPlayerId);
-  if (target.isLeader || target.isExLeader) {
-    throw new Error('不能將護身符給予當前領袖或退伍領袖！');
+  if (target.isLeader || target.hasBeenLeader) {
+    throw new Error('不能將護身符給予當前領袖或退休領袖！');
   }
 
   const updatedPlayers = gameState.players.map(p => ({
@@ -708,13 +702,45 @@ export function executeHunt(gameState, targetIds) {
  * @param {Object} fingerPointers - 玩家手指指向 { pointerPlayerId: [targetPlayerId1, targetPlayerId2] }
  */
 export function executeFinalQuest(gameState) {
-  // 邪惡方玩家名單（扣除特殊身份如 REVEALER，若有）
-  const evilPlayers = gameState.players.filter(p => p.alignment === ALIGNMENT.EVIL && p.roleId !== 'REVEALER');
-  const evilIds = evilPlayers.map(p => p.id);
-  const evilNames = evilPlayers.map(p => p.name).join('、');
+  // 1. 檢查叛徒 (TRAITOR) 轉化機制
+  let updatedPlayers = gameState.players.map(p => {
+    if (p.roleId === 'TRAITOR') {
+      const traitorTargets = gameState.pointings[p.id] || [];
+      if (traitorTargets.length === 2) {
+        const allTargetsAreGood = traitorTargets.every(tid => {
+          const targetPl = gameState.players.find(x => x.id === tid);
+          return targetPl && targetPl.alignment === ALIGNMENT.GOOD;
+        });
+        if (allTargetsAreGood) {
+          return {
+            ...p,
+            alignment: ALIGNMENT.GOOD,
+            roleName: '已轉化叛徒 🟢'
+          };
+        }
+      }
+    }
+    return p;
+  });
 
-  // 正義方好人玩家名單
-  const goodPlayers = gameState.players.filter(p => p.alignment === ALIGNMENT.GOOD);
+  // 2. 邪惡方玩家名單（扣除特殊身份如 REVEALER，若有，主要用來印在日誌中）
+  const evilPlayers = updatedPlayers.filter(p => p.alignment === ALIGNMENT.EVIL && p.roleId !== 'REVEALER');
+  const evilNames = evilPlayers.length > 0 ? evilPlayers.map(p => p.name).join('、') : '無';
+
+  // 3. 好人必須指認的目標：包含所有目前邪惡爪牙，以及【叛徒】（不論叛徒有沒有轉化成功，好人都必須指認他才能獲勝！）
+  const targetsToFind = updatedPlayers.filter(p => 
+    (p.alignment === ALIGNMENT.EVIL && p.roleId !== 'REVEALER') || p.roleId === 'TRAITOR'
+  );
+  const targetNamesToFind = targetsToFind.map(p => {
+    if (p.roleId === 'TRAITOR') {
+      const isConverted = p.alignment === ALIGNMENT.GOOD;
+      return `${p.name}(叛徒${isConverted ? '[已轉化]' : ''})`;
+    }
+    return p.name;
+  }).join('、');
+
+  // 4. 正義方好人玩家名單（做指認的人，排除叛徒，因為叛徒就算是轉化了，他的指認也僅限於自我轉化之用，不列入好人指同盟錯誤判定）
+  const goodPlayers = updatedPlayers.filter(p => p.alignment === ALIGNMENT.GOOD && p.roleId !== 'TRAITOR');
 
   const logDetails = [];
   let pointingError = false;
@@ -728,28 +754,52 @@ export function executeFinalQuest(gameState) {
 
     targets.forEach(tid => {
       unionTargets.add(tid);
-      const targetPl = gameState.players.find(x => x.id === tid);
-      if (targetPl && targetPl.alignment === ALIGNMENT.GOOD) {
+      const targetPl = updatedPlayers.find(x => x.id === tid);
+      // 如果指認好人，且被指認者不是叛徒（指認叛徒不算指錯好人，不論叛徒有沒有轉化），就判定為錯誤
+      if (targetPl && targetPl.alignment === ALIGNMENT.GOOD && targetPl.roleId !== 'TRAITOR') {
         pointingError = true;
         goodTargetedErrors.push(`【${p.name}】誤指認了同盟【${targetPl.name}】`);
       }
     });
   });
 
-  // 檢查漏網之魚 (有沒有哪位壞人沒被任何好人指認到)
-  const missedEvils = evilPlayers.filter(ep => !unionTargets.has(ep.id));
-  const hasMissedEvil = missedEvils.length > 0;
-  const missedNames = missedEvils.map(p => p.name).join('、');
+  // 檢查叛徒自己的指向（記錄到日誌，但不進行指認錯誤判定）
+  const traitorPlayer = updatedPlayers.find(p => p.roleId === 'TRAITOR');
+  if (traitorPlayer) {
+    const tTargets = gameState.pointings[traitorPlayer.id] || [];
+    const tTargetNames = gameState.players.filter(t => tTargets.includes(t.id)).map(t => t.name).join('、');
+    logDetails.push(`  • 【${traitorPlayer.name}(叛徒)】指向 ➡️ 【${tTargets.length === 0 ? '無（放下雙手）' : tTargetNames}】`);
+  }
 
-  const isCorrect = !pointingError && !hasMissedEvil;
+  // 5. 檢查漏網之魚（在必須被指認的名單 targetsToFind 中，有沒有誰沒被任何好人指認到）
+  const missedTargets = targetsToFind.filter(ep => !unionTargets.has(ep.id));
+  const hasMissedTarget = missedTargets.length > 0;
+  const missedNames = missedTargets.map(p => {
+    if (p.roleId === 'TRAITOR') {
+      const isConverted = p.alignment === ALIGNMENT.GOOD;
+      return `${p.name}(叛徒${isConverted ? '[已轉化]' : ''})`;
+    }
+    return p.name;
+  }).join('、');
+
+  const isCorrect = !pointingError && !hasMissedTarget;
 
   // 拼接豐富的結算日誌
   const newLogs = [
     ...gameState.logs,
-    { type: 'highlight', text: `🏁 最終任務 - 命運動態結算開始！` },
-    { type: 'system', text: `😈 戰場邪惡爪牙名單為：【${evilNames}】` },
-    { type: 'system', text: `🛡️ 正義盟友的手指秘密指向：\n${logDetails.join('\n')}` }
+    { type: 'highlight', text: `🏁 最終任務 - 命運動態結算開始！` }
   ];
+
+  // 如果叛徒成功轉化，特別印出醒目的提示
+  if (traitorPlayer && traitorPlayer.alignment === ALIGNMENT.GOOD) {
+    newLogs.push({
+      type: 'highlight',
+      text: `🔮 叛徒【${traitorPlayer.name}】在最終指認時指向了兩位正義盟友，成功轉換陣營為正義方！🟢`
+    });
+  }
+
+  newLogs.push({ type: 'system', text: `👿 好人本次必須成功指認出所有邪惡爪牙及叛徒：【${targetNamesToFind}】` });
+  newLogs.push({ type: 'system', text: `🛡️ 正義盟友的手指秘密指向：\n${logDetails.join('\n')}` });
 
   if (pointingError) {
     newLogs.push({
@@ -758,20 +808,21 @@ export function executeFinalQuest(gameState) {
     });
   }
 
-  if (hasMissedEvil) {
+  if (hasMissedTarget) {
     newLogs.push({
       type: 'alert',
-      text: `🕷️ 漏網之魚！邪惡爪牙【${missedNames}】成功隱匿於陰影之中，逃脫了指認！`
+      text: `🕷️ 漏網之魚！邪惡爪牙或叛徒【${missedNames}】成功隱匿或逃脫了指認！`
     });
   }
 
   if (isCorrect) {
     newLogs.push({
       type: 'highlight',
-      text: `🎉 指認完全正確！沒有指錯好人，且所有壞人皆被揪出！正義方排除萬難，反敗為勝！國度重歸安寧！👑`
+      text: `🎉 指認完全正確！沒有指錯好人，且成功揪出了所有壞人與叛徒！正義方排除萬難，反敗為勝！國度重歸安寧！👑`
     });
     return {
       ...gameState,
+      players: updatedPlayers,
       phase: GAME_PHASES.END,
       winner: ALIGNMENT.GOOD,
       logs: newLogs
@@ -783,6 +834,7 @@ export function executeFinalQuest(gameState) {
     });
     return {
       ...gameState,
+      players: updatedPlayers,
       phase: GAME_PHASES.END,
       winner: ALIGNMENT.EVIL,
       logs: newLogs

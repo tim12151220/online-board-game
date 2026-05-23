@@ -139,7 +139,8 @@ function handlePeerMessage(type, payload, senderId) {
 function handleClientJoin(payload, senderId) {
   // 1. 遊戲已經在進行中，嘗試重連 (Reconnection)
   if (gameState && gameState.phase !== GAME_PHASES.LOBBY) {
-    const offlinePlayer = gameState.players.find(p => p.name === payload.name && p.isOffline);
+    // 容錯優化：只要名字完全一致，不論 Host 是否已完成 isOffline 標記，都允許直接接管角色重連
+    const offlinePlayer = gameState.players.find(p => p.name === payload.name);
     if (offlinePlayer) {
       const oldId = offlinePlayer.id;
       
@@ -171,7 +172,7 @@ function handleClientJoin(payload, senderId) {
       broadcastGameState();
     } else {
       peerManager.sendToClient(senderId, MESSAGE_TYPES.CHAT, {
-        text: '圓桌會議已在進行中，且未找到屬於你的重連身分！'
+        text: '⚠️ 圓桌會議已在進行中，且未找到屬於你的重連身分！\n\n【重連秘訣】\n請檢查並確認：你輸入的「你的英雄尊名」必須與斷線前「完全一模一樣」（大小寫與空格需一致）才能順利接管原角色重連！'
       });
     }
     return;

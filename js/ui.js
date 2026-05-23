@@ -42,8 +42,15 @@ export class UIRenderer {
    * @param {Object} peerManager - 連線管理器實例
    */
   render(gameState, myPeerId, peerManager) {
+    const savedScrollY = window.scrollY;
+    const currentHeight = this.container.offsetHeight;
+    if (currentHeight > 0) {
+      this.container.style.minHeight = `${currentHeight}px`;
+    }
+
     if (!gameState) {
       this.renderLobbySetup(peerManager);
+      this.container.style.minHeight = '';
       return;
     }
 
@@ -61,6 +68,12 @@ export class UIRenderer {
         this.renderMainGameBoard(gameState, myPlayer, peerManager);
         break;
     }
+
+    // 利用 setTimeout 異步解鎖高度並強制還原滾動條，徹底根治多人同步強制跳頂 Bug
+    setTimeout(() => {
+      this.container.style.minHeight = '';
+      window.scrollTo(0, savedScrollY);
+    }, 0);
   }
 
   /**
@@ -287,7 +300,12 @@ export class UIRenderer {
 
           <!-- 角色模組配置 -->
           <div class="lobby-card" style="grid-column: span 1;">
-            <h2 class="lobby-card-title">🔮 身分與角色卡池</h2>
+            <h2 class="lobby-card-title" style="display:flex; justify-content:space-between; align-items:center;">
+              <span>🔮 身分與角色卡池</span>
+              <span style="font-size:11px; padding:3px 6px; border-radius:4px; font-weight:bold; background:${(gameState.selectedRoles || []).length === playerCount ? 'rgba(72,187,120,0.15)' : 'rgba(237,137,54,0.15)'}; color:${(gameState.selectedRoles || []).length === playerCount ? '#68d391' : '#f6ad55'}; border:1px solid ${(gameState.selectedRoles || []).length === playerCount ? 'rgba(72,187,120,0.3)' : 'rgba(237,137,54,0.3)'};">
+                已選 ${(gameState.selectedRoles || []).length} / ${playerCount}
+              </span>
+            </h2>
             <p style="font-size:11px; color:#a0aec0; margin-top:-8px;">點選牌組配置你想要的特殊能力英雄。基本版建議選【摩根勒菲】與【王儲】。</p>
             <div class="role-grid" style="margin-top: 10px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px;">
               ${roleBadgesHTML}
@@ -298,11 +316,38 @@ export class UIRenderer {
           ${recommendedTableHTML}
         </div>
 
-        <div style="display:flex; justify-content:flex-end; gap: 15px; margin-top: 15px;">
-          <button class="btn-danger" id="btn-leave-lobby">退隱江湖</button>
-          ${isHost ? `
-            <button class="btn-primary" id="btn-start-game" ${playerCount < 4 ? 'disabled' : ''}>開啟聖杯探索 (START)</button>
-          ` : `
+        <div style="display:flex; justify-content:flex-end; gap: 15px; margin-top: 15px; align-items: flex-end;">
+          <button class="btn-danger" id="btn-leave-lobby" style="padding: 10px 15px;">退隱江湖</button>
+          ${isHost ? (() => {
+            const selectedCount = (gameState.selectedRoles || []).length;
+            const isCountMatch = selectedCount === playerCount;
+            
+            let btnDisabled = '';
+            let btnTip = '';
+            
+            if (playerCount < 4) {
+              btnDisabled = 'disabled';
+              btnTip = `<span style="font-size:10.5px; color:var(--color-error); font-weight:bold; display:block; margin-bottom:5px; text-align:right;">⚠️ 人數不足：就座人數 (${playerCount}人) 不足 4 人，無法開局！</span>`;
+            } else if (!isCountMatch) {
+              btnDisabled = 'disabled';
+              btnTip = `<span style="font-size:10.5px; color:var(--color-warning); font-weight:bold; display:block; margin-bottom:5px; text-align:right;">⚠️ 配置未滿：已選角色 (${selectedCount}) 不等於就座人數 (${playerCount})！</span>`;
+            } else {
+              // 檢查正義/邪惡比例防呆
+              const boardConfig = BOARD_CONFIGS[playerCount];
+              const selectedEvilCount = (gameState.selectedRoles || []).filter(rId => CHARACTERS[rId].alignment === ALIGNMENT.EVIL).length;
+              if (boardConfig && selectedEvilCount !== boardConfig.evilCount) {
+                btnDisabled = 'disabled';
+                btnTip = `<span style="font-size:10.5px; color:var(--color-warning); font-weight:bold; display:block; margin-bottom:5px; text-align:right;">⚠️ 陣營失衡：${playerCount}人局需剛好 ${boardConfig.evilCount} 惡 / ${boardConfig.goodCount} 善，當前已選 ${selectedEvilCount} 惡！</span>`;
+              }
+            }
+
+            return `
+              <div style="display:flex; flex-direction:column; align-items:flex-end;">
+                ${btnTip}
+                <button class="btn-primary" id="btn-start-game" style="padding:10px 18px;" ${btnDisabled}>開啟聖杯探索 (START)</button>
+              </div>
+            `;
+          })() : `
             <button class="btn-primary" disabled>等待創房領袖發出探索召集令...</button>
           `}
         </div>
@@ -405,8 +450,65 @@ export class UIRenderer {
   }
 
   renderMainGameBoard(gameState, myPlayer, peerManager) {
+    const savedScrollY = window.scrollY;
+    const currentHeight = this.container.offsetHeight;
+    if (currentHeight > 0) {
+      this.container.style.minHeight = `${currentHeight}px`;
+    }
+
     const playerCount = gameState.players.length;
     const currentLeader = gameState.players.find(p => p.id === gameState.currentLeaderId);
+
+    // 聖物 Hover Legend 面板
+    const relicsLegendHTML = `
+      <div class="relics-legend-panel" style="margin-bottom: 5px;">
+        <h4 class="relics-legend-title">✨ 聖物指示物圖例</h4>
+        <div class="relics-badge-row">
+          <div class="relics-badge-item">
+            <span class="relics-badge-icon">👑</span>
+            <div class="relics-tooltip">
+              <div class="relics-tooltip-header">👑 領袖指示物</div>
+              <div class="relics-tooltip-desc">當前探索領袖，擁有指派任務成員與分配魔法/護身符的權利。</div>
+            </div>
+          </div>
+          <div class="relics-badge-item">
+            <span class="relics-badge-icon">📜</span>
+            <div class="relics-tooltip">
+              <div class="relics-tooltip-header">📜 退休領袖</div>
+              <div class="relics-tooltip-desc">曾經擔任過領袖的人。不能被指派為新領袖，也不能持有護身符。</div>
+            </div>
+          </div>
+          <div class="relics-badge-item">
+            <span class="relics-badge-icon">⚡</span>
+            <div class="relics-tooltip">
+              <div class="relics-tooltip-header">⚡ 魔法保護</div>
+              <div class="relics-tooltip-desc">本回合被賦予魔法的成員。任務出牌時，其得票將被強迫視為「成功」，但魔女與破壞者不受此限制。</div>
+            </div>
+          </div>
+          <div class="relics-badge-item">
+            <span class="relics-badge-icon">🛡️</span>
+            <div class="relics-tooltip">
+              <div class="relics-tooltip-header">🛡️ 出任務成員</div>
+              <div class="relics-tooltip-desc">本回合被領袖指派，即將前往參與探索任務的隊員。</div>
+            </div>
+          </div>
+          <div class="relics-badge-item">
+            <span class="relics-badge-icon">🔍</span>
+            <div class="relics-tooltip">
+              <div class="relics-tooltip-header">🔍 護身符</div>
+              <div class="relics-tooltip-desc">持有護身符者。在領袖交接階段時，可以檢視上一任領袖指定的玩家其陣營忠誠傾向。</div>
+            </div>
+          </div>
+          <div class="relics-badge-item">
+            <span class="relics-badge-icon">🔒</span>
+            <div class="relics-tooltip">
+              <div class="relics-tooltip-header">🔒 褪色護身符</div>
+              <div class="relics-tooltip-desc">代表已經被護身符檢視過身分的玩家。此後不能再獲得護身符，亦不可接任領袖。</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
 
     // === 左側常駐角色卡池與 Tooltip ===
     const activeRoleIds = gameState.selectedRoles || gameState.players.map(p => p.roleId);
@@ -421,7 +523,8 @@ export class UIRenderer {
 
     const leftSideHTML = `
       <div class="game-left-panel">
-        <h3 class="panel-title">🔮 本局角色名冊</h3>
+        ${relicsLegendHTML}
+        <h3 class="panel-title" style="margin-top: 5px;">🔮 本局角色名冊</h3>
         <div class="role-list">
           ${activeRoles.map(role => `
             <div class="game-role-card ${role.alignment.toLowerCase()}">
@@ -517,19 +620,28 @@ export class UIRenderer {
         badgesHTML += `<div class="badge-indicator" style="bottom:-4px; left:-4px; background:#718096; color:#000;" title="褪色護身符（已被驗證）">🔒</div>`;
       }
 
-      // 亞瑟傳奇特別指示物：曾擔任領袖 (🎖️) 和 立即前任領袖 (📜)
+      // 亞瑟傳奇特別指示物：退休領袖 (📜) 代表曾經當過領袖的人
       if (p.hasBeenLeader && !isLeader) {
-        badgesHTML += `<div class="badge-indicator badge-veteran" style="bottom:-4px; right:-4px; background:#d69e2e; color:#fff; font-size:9px;" title="退伍領袖（Veteran）">🎖️</div>`;
-      }
-      if (isExLeader) {
-        badgesHTML += `<div class="badge-indicator badge-ex-leader" style="bottom:12px; right:-4px; background:#cbd5e0; color:#1a202c; font-size:9px;" title="前任領袖（Ex-Leader）">📜</div>`;
+        badgesHTML += `<div class="badge-indicator badge-ex-leader" style="bottom:-4px; right:-4px; background:#cbd5e0; color:#1a202c; font-size:9px;" title="退休領袖（Retired Leader）">📜</div>`;
       }
 
-      // 身份提示標籤 (知情者提示)
+      // 身份提示標籤 (知情者提示，遊戲結束時全面揭曉所有玩家身分)
       let tipHTML = '';
-      const isMySelfEvil = myPlayer.alignment === ALIGNMENT.EVIL && myPlayer.roleId !== 'CHANGELING' && myPlayer.roleId !== 'PRINCE';
-      
-      if (p.id !== myPlayer.id) {
+      if (gameState.phase === GAME_PHASES.END) {
+        const role = CHARACTERS[p.roleId];
+        const alignmentText = p.alignment === ALIGNMENT.GOOD ? '正義' : '邪惡';
+        const badgeColor = p.alignment === ALIGNMENT.GOOD ? 'rgba(72,187,120,0.15)' : 'rgba(229,62,62,0.15)';
+        const textColor = p.alignment === ALIGNMENT.GOOD ? '#68d391' : '#fc8181';
+        const borderColor = p.alignment === ALIGNMENT.GOOD ? 'rgba(72,187,120,0.3)' : 'rgba(229,62,62,0.3)';
+        tipHTML = `<div style="font-size:9.5px; background:${badgeColor}; color:${textColor}; border:1px solid ${borderColor}; padding:2px 5px; border-radius:4px; margin-top:2px; display:inline-block; font-weight:bold;">${role ? role.avatar : ''} ${role ? role.name : p.roleId} (${alignmentText})</div>`;
+      } else if (p.id !== myPlayer.id) {
+        const isMySelfEvil = myPlayer.alignment === ALIGNMENT.EVIL && 
+                             myPlayer.roleId !== 'CHANGELING' && 
+                             myPlayer.roleId !== 'PRINCE' && 
+                             myPlayer.roleId !== 'TRAITOR' && 
+                             myPlayer.roleId !== 'BLIND_ASSASSIN' && 
+                             myPlayer.roleId !== 'MADMAN';
+
         // 1. 如果我是邪惡盟友且對方也是邪惡同夥 (不含幻形妖)
         if (isMySelfEvil && p.alignment === ALIGNMENT.EVIL && p.roleId !== 'CHANGELING') {
           let evilRoleText = '邪惡同夥';
@@ -813,12 +925,6 @@ export class UIRenderer {
               if (myPlayer.roleId === 'MORGAN_LE_FAY') {
                 failDisabled = false;
                 extraTip = '你雖有魔法，但因你是【摩根勒菲】而可不受限制！';
-              }
-              // 破壞者如果持有退伍領袖必須投失敗
-              if (myPlayer.roleId === 'SABOTEUR' && myPlayer.isExLeader) {
-                successDisabled = true;
-                failDisabled = false;
-                extraTip = '你作為持有退伍領袖的【破壞者】，魔法失效且必須出失敗！';
               }
             }
 
@@ -1439,22 +1545,6 @@ export class UIRenderer {
       </div>
     `;
 
-    // 8. 常駐聖物 Legend 面板
-    const legendPanelHTML = `
-      <div class="legend-panel">
-        <div class="legend-title">✨ 聖物指示物圖例說明 ✨</div>
-        <div class="legend-grid">
-          <div class="legend-item"><span class="legend-icon">👑</span> 領袖指示物 (當前探索指派者)</div>
-          <div class="legend-item"><span class="legend-icon">📜</span> 退伍領袖 (Last Leader Token, 剛卸任)</div>
-          <div class="legend-item"><span class="legend-icon">🎖️</span> 曾任領袖 (Veteran Token, 當過領袖)</div>
-          <div class="legend-item"><span class="legend-icon">⚡</span> 魔法保護 (得票強迫成功，魔女/破壞者例外)</div>
-          <div class="legend-item"><span class="legend-icon">🛡️</span> 出任務成員 (本回合探索隊員)</div>
-          <div class="legend-item"><span class="legend-icon">🔍</span> 護身符 (擁有驗身特權)</div>
-          <div class="legend-item"><span class="legend-icon">🔒</span> 褪色護身符 (已被檢視過，不可再拿)</div>
-        </div>
-      </div>
-    `;
-
     // 結合主要盤面
     this.container.innerHTML = `
       <div class="game-container">
@@ -1476,9 +1566,6 @@ export class UIRenderer {
           ${rightSideHTML}
         </div>
         
-        <!-- 常駐聖物圖例 Legend 面板 -->
-        ${legendPanelHTML}
-        
         <!-- 系統日誌日誌 -->
         <div class="logs-panel" style="width: 90vw; max-width: 800px; margin-top: 10px; margin-bottom: 10px;">
           ${logsHTML}
@@ -1498,6 +1585,12 @@ export class UIRenderer {
     `;
 
     this.bindGameEvents(gameState, myPlayer, peerManager);
+
+    // 強效高度鎖定與異步滾動還原，徹底解決自己/他人操作導致的滾動置頂問題
+    setTimeout(() => {
+      this.container.style.minHeight = '';
+      window.scrollTo(0, savedScrollY);
+    }, 0);
   }
 
   /**

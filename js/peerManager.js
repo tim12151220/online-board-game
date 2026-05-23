@@ -13,17 +13,29 @@ const PEER_CONFIG = {
       { urls: 'stun:stun2.l.google.com:19302' },
       { urls: 'stun:stun3.l.google.com:19302' },
       { urls: 'stun:stun4.l.google.com:19302' },
-      // 新增免費公共 TURN 伺服器，專門用來處理 Symmetric NAT (對稱型網絡/企業學校防火牆) 的中繼傳輸
+      { urls: 'stun:stun.anyfirewall.com:3478' },
+      // 備援 1: Metered OpenRelay 公共 TURN 伺服器
       {
         urls: [
           'turn:openrelay.metered.ca:80',
           'turn:openrelay.metered.ca:443',
-          'turn:openrelay.metered.ca:443?transport=tcp'
+          'turn:openrelay.metered.ca:443?transport=tcp',
+          'turns:openrelay.metered.ca:443?transport=tcp'
         ],
         username: 'openrelay',
         credential: 'openrelay'
+      },
+      // 備援 2: anyfirewall 免費 TURN 伺服器
+      {
+        urls: [
+          'turn:stun.anyfirewall.com:3478?transport=udp',
+          'turn:stun.anyfirewall.com:3478?transport=tcp'
+        ],
+        username: 'anyfirewall',
+        credential: 'anyfirewall'
       }
-    ]
+    ],
+    iceCandidatePoolSize: 10
   }
 };
 
@@ -43,6 +55,10 @@ export class PeerManager {
 
     // 心跳機制定時器
     this.keepAliveTimer = null;
+
+    // 螢幕常亮與斷線自動重連機制
+    this.wakeLock = null;
+    this.setupPageListeners();
   }
 
   /**
@@ -81,10 +97,20 @@ export class PeerManager {
       }, this.peer.id);
       
       this.startKeepAlive();
+      this.requestWakeLock(); // 啟用防休眠螢幕鎖
     });
 
     this.peer.on('connection', (conn) => {
       this.handleIncomingConnection(conn);
+    });
+
+    this.peer.on('disconnected', () => {
+      console.warn('Host 與雲端握手伺服器中斷連線，嘗試自動重連中...');
+      setTimeout(() => {
+        if (this.peer && this.peer.disconnected && !this.peer.destroyed) {
+          this.peer.reconnect();
+        }
+      }, 1000);
     });
 
     this.peer.on('error', (err) => {
@@ -123,6 +149,16 @@ export class PeerManager {
       
       this.setupClientConnection(conn);
       this.startKeepAlive();
+      this.requestWakeLock(); // 啟用防休眠螢幕鎖
+    });
+
+    this.peer.on('disconnected', () => {
+      console.warn('Client 與雲端握手伺服器中斷連線，嘗試自動重連中...');
+      setTimeout(() => {
+        if (this.peer && this.peer.disconnected && !this.peer.destroyed) {
+          this.peer.reconnect();
+        }
+      }, 1000);
     });
 
     this.peer.on('error', (err) => {
@@ -264,6 +300,7 @@ export class PeerManager {
    */
   destroy() {
     if (this.keepAliveTimer) clearInterval(this.keepAliveTimer);
+    this.releaseWakeLock(); // 釋放螢幕防休眠鎖
     
     Object.values(this.connections).forEach(conn => conn.close());
     if (this.hostConnection) this.hostConnection.close();
@@ -273,5 +310,55 @@ export class PeerManager {
     this.hostConnection = null;
     this.isHost = false;
     this.roomCode = '';
+  }
+
+  /**
+   * 設定網頁事件監聽，支援從背景切回前台時自動重連 PeerJS 雲端伺服器
+   */
+  setupPageListeners() {
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        console.log('網頁切回前台，執行 Wake Lock 重新申請與 PeerJS 連線自動修復...');
+        
+        // 1. 重新申請螢幕防休眠鎖
+        if (this.peer && !this.peer.destroyed) {
+          this.requestWakeLock();
+        }
+        
+        // 2. 如果 PeerJS 連線已斷開，自動發起 reconnect()
+        if (this.peer && this.peer.disconnected && !this.peer.destroyed) {
+          console.log('偵測到 PeerJS signaling 已斷開，執行 peer.reconnect()...');
+          this.peer.reconnect();
+        }
+      }
+    });
+  }
+
+  /**
+   * 啟用 Screen Wake Lock 防休眠鎖
+   */
+  async requestWakeLock() {
+    try {
+      if ('wakeLock' in navigator) {
+        this.wakeLock = await navigator.wakeLock.request('screen');
+        console.log('✨ 螢幕 Wake Lock 已成功啟用，防止進入睡眠狀態！');
+      }
+    } catch (err) {
+      console.warn(`Wake Lock 啟用失敗: ${err.message}`);
+    }
+  }
+
+  /**
+   * 釋放 Screen Wake Lock 防休眠鎖
+   */
+  releaseWakeLock() {
+    if (this.wakeLock) {
+      this.wakeLock.release().then(() => {
+        this.wakeLock = null;
+        console.log('螢幕 Wake Lock 已成功釋放。');
+      }).catch(err => {
+        console.error('釋放 Wake Lock 失敗:', err);
+      });
+    }
   }
 }
