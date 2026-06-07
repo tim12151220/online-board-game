@@ -224,8 +224,8 @@ export const BOARD_CONFIGS = {
     ]
   },
   6: {
-    goodCount: 4,
-    evilCount: 2,
+    goodCount: 3,
+    evilCount: 3,
     quests: [
       { players: 2, amulet: false, failsNeeded: 1 },
       { players: 3, amulet: true, failsNeeded: 1 }, // 第二回合結束後有護身符
