@@ -6,33 +6,35 @@ import { MESSAGE_TYPES } from './types.js';
 
 const PEER_CONFIG = {
   debug: 1,
+  pingInterval: 5000, // 每 5 秒強制向雲端信令伺服器發送心跳，防止手機省電模式或運營商單方面中斷 Websocket 連線
   config: {
     iceServers: [
+      // 1. 保留原本穩定的全球公共 STUN 伺服器群（負責幫一般網路環境打洞）
       { urls: 'stun:stun.l.google.com:19302' },
-      { urls: 'stun:stun1.l.google.com:19302' },
-      { urls: 'stun:stun2.l.google.com:19302' },
-      { urls: 'stun:stun3.l.google.com:19302' },
-      { urls: 'stun:stun4.l.google.com:19302' },
-      { urls: 'stun:stun.anyfirewall.com:3478' },
-      // 備援 1: Metered OpenRelay 公共 TURN 伺服器
+      { urls: 'stun:global.stun.twilio.com:3478' },
+      { urls: 'stun:stun.cloudflare.com:3478' },
+      { urls: 'stun:stun.relay.metered.ca:80' }, // Metered 提供的額外 STUN
+
+      // 2. 填入你專屬的 Metered TURN 中繼伺服器群（負責在打洞失敗時強制中繼流量）
       {
-        urls: [
-          'turn:openrelay.metered.ca:80',
-          'turn:openrelay.metered.ca:443',
-          'turn:openrelay.metered.ca:443?transport=tcp',
-          'turns:openrelay.metered.ca:443?transport=tcp'
-        ],
-        username: 'openrelay',
-        credential: 'openrelay'
+        urls: "turn:global.relay.metered.ca:80",
+        username: "faa72918a37f9ced0b56c5d7",
+        credential: "ntqgqGL/72vNdnM1",
       },
-      // 備援 2: anyfirewall 免費 TURN 伺服器
       {
-        urls: [
-          'turn:stun.anyfirewall.com:3478?transport=udp',
-          'turn:stun.anyfirewall.com:3478?transport=tcp'
-        ],
-        username: 'anyfirewall',
-        credential: 'anyfirewall'
+        urls: "turn:global.relay.metered.ca:80?transport=tcp",
+        username: "faa72918a37f9ced0b56c5d7",
+        credential: "ntqgqGL/72vNdnM1",
+      },
+      {
+        urls: "turn:global.relay.metered.ca:443",
+        username: "faa72918a37f9ced0b56c5d7",
+        credential: "ntqgqGL/72vNdnM1",
+      },
+      {
+        urls: "turns:global.relay.metered.ca:443?transport=tcp",
+        username: "faa72918a37f9ced0b56c5d7",
+        credential: "ntqgqGL/72vNdnM1",
       }
     ],
     iceCandidatePoolSize: 10
@@ -115,11 +117,15 @@ export class PeerManager {
 
     this.peer.on('error', (err) => {
       console.error('PeerJS Host 錯誤:', err);
+      let errorMsg = `⚠️ 網路發生錯誤: ${err.message}`;
       if (err.type === 'unavailable-id') {
-        this.onStatus('房號已被佔用，請重新嘗試創立房間！', true);
-      } else {
-        this.onStatus(`網路發生錯誤: ${err.message}`, true);
+        errorMsg = '⚠️ 房號已被佔用或尚未釋放！請點擊下方「退隱江湖」重新開啟一個新房間再試試看！';
+      } else if (err.type === 'server-error') {
+        errorMsg = '⚠️ 雲端握手伺服器忙碌或限流中。請點擊「退隱江湖」重新開房，換一個新房號通常能秒連！';
+      } else if (err.type === 'network') {
+        errorMsg = '⚠️ 與雲端握手伺服器網路中線！請確認你的網路是否正常，或嘗試【關閉 Wi-Fi 改用 4G/5G 行動網路】！';
       }
+      this.onStatus(errorMsg, true);
     });
   }
 
@@ -142,10 +148,8 @@ export class PeerManager {
     this.peer.on('open', (id) => {
       this.myPeerId = id;
       
-      // 主動連線至 Host
-      const conn = this.peer.connect(hostPeerId, {
-        reliable: true
-      });
+      // 主動連線至 Host (移除 reliable: true 以提升弱網環境下的 WebRTC 連線率)
+      const conn = this.peer.connect(hostPeerId);
       
       this.setupClientConnection(conn);
       this.startKeepAlive();
@@ -163,11 +167,15 @@ export class PeerManager {
 
     this.peer.on('error', (err) => {
       console.error('PeerJS Client 錯誤:', err);
+      let errorMsg = `⚠️ 連線錯誤: ${err.message}`;
       if (err.type === 'peer-unavailable') {
-        this.onStatus(`找不到房號 ${this.roomCode}，請確認房號是否正確或 Host 已關閉！`, true);
-      } else {
-        this.onStatus(`連線錯誤: ${err.message}`, true);
+        errorMsg = '⚠️ 找不到這個房間！請確認房長的房號是否輸入正確，或請房長保持手機螢幕亮著並重新開房！';
+      } else if (err.type === 'network' || err.type === 'webrtc') {
+        errorMsg = '⚠️ 網路直連通道建立失敗。請雙方都嘗試【關閉 Wi-Fi 改用 4G/5G 行動網路】並重新整理！';
+      } else if (err.type === 'server-error') {
+        errorMsg = '⚠️ 雲端信令伺服器發生抖動。請請房長重新開一個新房間（換個房號）通常能秒連！';
       }
+      this.onStatus(errorMsg, true);
     });
   }
 
